@@ -1,0 +1,32 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+df = pd.read_csv("train_cleansed.csv")
+df['Order Date'] = pd.to_datetime(df['Order Date'], format='mixed', dayfirst=True, errors='coerce')
+df['month'] = df['Order Date'].dt.to_period('M')
+
+monthly_sales = df.groupby('month')['Sales'].sum()
+monthly_sales = pd.DataFrame(monthly_sales)
+monthly_sales['time'] = np.arange(len(monthly_sales.index))
+print(monthly_sales.head())
+
+def plot_trend(order=1):
+    sns.set_style('whitegrid')
+    plt.figure(figsize=(13,4))
+    plt.title(f"Monthly Sales with Order {order} regression", fontsize=18, fontweight='bold')
+    plt.xlabel("Time")
+    plt.ylabel("Sales")
+    plt.plot(monthly_sales['time'], monthly_sales['Sales'], color='0.75')
+    ax = sns.regplot(data=monthly_sales, x='time', y='Sales', scatter_kws=dict(color='0.25'), order=order)
+    plt.show()
+
+for order in range(1,6):
+    plot_trend(order)
+
+moving_average = monthly_sales['Sales'].rolling(window=3, center=True, min_periods=1).mean()
+ax = monthly_sales['Sales'].plot(style="-.", color="0.5", figsize=(12,4))
+ax.set_title('Moving Average')
+moving_average.plot(ax=ax, linewidth=3)
+plt.show()
